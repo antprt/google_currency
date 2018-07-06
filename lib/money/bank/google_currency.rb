@@ -147,7 +147,7 @@ class Money
       # @param [Currency] to The currency to convert to.
       #
       # @return [URI::HTTP]
-      def build_uri(from, to)       
+      def build_uri(from, to)
         uri = URI::HTTP.build(
           :host  => SERVICE_HOST,
           :path  => SERVICE_PATH,
@@ -162,8 +162,15 @@ class Money
       #
       # @return [BigDecimal]
       def extract_rate(data)
+        value = data.scan(/<span class='uccResultAmount'.+?span>/)
+        if value.present?
+          BigDecimal value.first.scan(/\d+\.?\d*/).last
+        else
+          raise GoogleCurrencyFetchError
+        end
+=begin
         case data
-        when /<span class=bld>(\d+\.?\d*) [A-Z]{3}<\/span>/
+        when /<span class=uccResultAmount>(\d+\.?\d*)<\/span>/
           BigDecimal($1)
         when /Could not convert\./
           raise UnknownRate
@@ -172,6 +179,7 @@ class Money
         else
           raise GoogleCurrencyFetchError
         end
+=end
       end
     end
   end
