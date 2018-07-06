@@ -15,9 +15,8 @@ class Money
 
     class GoogleCurrency < Money::Bank::VariableExchange
 
-
-      SERVICE_HOST = "finance.google.com"
-      SERVICE_PATH = "/bctzjpnsun/converter"
+      SERVICE_HOST = "www.xe.com"
+      SERVICE_PATH = "/currencyconverter/convert"
 
 
       # @return [Hash] Stores the currently known rates.
@@ -148,11 +147,11 @@ class Money
       # @param [Currency] to The currency to convert to.
       #
       # @return [URI::HTTP]
-      def build_uri(from, to)
+      def build_uri(from, to)       
         uri = URI::HTTP.build(
           :host  => SERVICE_HOST,
           :path  => SERVICE_PATH,
-          :query => "a=1&from=#{from.iso_code}&to=#{to.iso_code}"
+          :query => "Amount=1&From=#{from.iso_code}&To=#{to.iso_code}"
         )
       end
 
