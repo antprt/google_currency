@@ -15,8 +15,8 @@ class Money
 
     class GoogleCurrency < Money::Bank::VariableExchange
 
-      SERVICE_HOST = "www.xe.com"
-      SERVICE_PATH = "/currencyconverter/convert"
+      SERVICE_HOST = "free.currencyconverterapi.com"
+      SERVICE_PATH = "/api/v5/convert"
 
 
       # @return [Hash] Stores the currently known rates.
@@ -126,10 +126,10 @@ class Money
       #
       # @return [BigDecimal] The requested rate.
       def fetch_rate(from, to)
-
         from, to = Currency.wrap(from), Currency.wrap(to)
-
-        data = build_uri(from, to).read
+        data = JSON.parse(build_uri(from, to).read)
+        #Petición antigua para solicitar un contenido HTML y scrapear
+        #data = build_uri(from, to).read
         rate = extract_rate(data);
 
         if (rate < 0.1)
@@ -137,7 +137,6 @@ class Money
         end
 
         rate
-
       end
 
       ##
@@ -151,7 +150,9 @@ class Money
         uri = URI::HTTP.build(
           :host  => SERVICE_HOST,
           :path  => SERVICE_PATH,
-          :query => "Amount=1&From=#{from.iso_code}&To=#{to.iso_code}"
+          :query => "q=#{from}_#{to}&compact=y"
+          #Query antigua de xe conversor
+          #:query => "Amount=1&From=#{from.iso_code}&To=#{to.iso_code}"
         )
       end
 
@@ -162,12 +163,23 @@ class Money
       #
       # @return [BigDecimal]
       def extract_rate(data)
+        value = data.values.first["val"]
+        if value.present?
+          return value
+        else
+          raise GoogleCurrencyFetchError
+        end
+
+#El primer bloque comentado corresponde al scraping sobre la URL de xe conversor y estuvo funcionando hasta que cargaron por react el factor de conversión
+#El segundo bloque corresponde a la forma primitiva de la gema de extraer de google finance la conversión adaptada a xe conversor
+=begin        
         value = data.scan(/<span class='uccResultAmount'.+?span>/)
         if value.present?
           BigDecimal value.first.scan(/\d+\.?\d*/).last
         else
           raise GoogleCurrencyFetchError
         end
+=end
 =begin
         case data
         when /<span class=uccResultAmount>(\d+\.?\d*)<\/span>/
@@ -184,3 +196,4 @@ class Money
     end
   end
 end
+
